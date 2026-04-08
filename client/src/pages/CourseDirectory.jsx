@@ -1,10 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import AppNavbar from "../components/AppNavbar";
 import courses from "../data/courses.json";
 import "../App.css";
 
-const SUBJECTS = ["All", ...Array.from(new Set(courses.map(c => c.subject))).sort()];
+const SUBJECTS = ["All", ...Array.from(new Set(courses.map((c) => c.subject))).sort()];
 
 function formatTime(t) {
   if (!t) return "";
@@ -24,6 +24,14 @@ function badgeClass(subject) {
   return `subject-badge badge-${subject}`;
 }
 
+function arraysEqual(a = [], b = []) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
 export default function CourseDirectory({
   session,
   profile,
@@ -32,9 +40,34 @@ export default function CourseDirectory({
 }) {
   const [query, setQuery] = useState("");
   const [subject, setSubject] = useState("All");
-  const [updating, setUpdating] = useState("");
 
-  const takenCourses = profile?.courses_taken || [];
+  const [localTakenCourses, setLocalTakenCourses] = useState(profile?.courses_taken || []);
+  const [saving, setSaving] = useState(false);
+  const [queuedLabels, setQueuedLabels] = useState(new Set());
+
+  // latest desired state
+  const desiredCoursesRef = useRef(profile?.courses_taken || []);
+  // last state successfully saved
+  const savedCoursesRef = useRef(profile?.courses_taken || []);
+  // avoid overlapping saves
+  const saveInFlightRef = useRef(false);
+  // prevent profile refresh from overwriting local unsaved changes
+  const dirtyRef = useRef(false);
+  // skip auto-save on first mount/sync
+  const initializedRef = useRef(false);
+
+  useEffect(() => {
+    const incoming = profile?.courses_taken || [];
+
+    // only sync from parent profile if we don't currently have unsaved local changes
+    if (!dirtyRef.current) {
+      setLocalTakenCourses(incoming);
+      desiredCoursesRef.current = incoming;
+      savedCoursesRef.current = incoming;
+    }
+
+    initializedRef.current = true;
+  }, [profile?.courses_taken]);
 
   const results = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -55,50 +88,89 @@ export default function CourseDirectory({
     });
   }, [query, subject]);
 
-  async function toggleTaken(courseLabel, isTaken) {
-    if (!session) return;
+  async function flushCourseUpdates() {
+    if (!session?.user) return;
+    if (saveInFlightRef.current) return;
 
-    setUpdating(courseLabel);
+    saveInFlightRef.current = true;
+    setSaving(true);
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      while (!arraysEqual(savedCoursesRef.current, desiredCoursesRef.current)) {
+        const snapshot = [...desiredCoursesRef.current];
 
-      if (!user) return;
+        const payload = {
+          id: session.user.id,
+          name: profile?.name || "",
+          academic_year: profile?.academic_year || null,
+          primary_major: profile?.primary_major || null,
+          second_major: profile?.second_major || null,
+          minor: profile?.minor || null,
+          concentration: profile?.concentration || null,
+          courses_taken: snapshot,
+          updated_at: new Date().toISOString(),
+        };
 
-      const current = profile?.courses_taken || [];
+        const { error } = await supabase.from("profiles").upsert(payload);
 
-      const updated = isTaken
-        ? current.filter((c) => c !== courseLabel)
-        : [...new Set([...current, courseLabel])];
+        if (error) {
+          console.error(error);
+          // revert UI to last confirmed saved state
+          desiredCoursesRef.current = savedCoursesRef.current;
+          setLocalTakenCourses(savedCoursesRef.current);
+          dirtyRef.current = false;
+          break;
+        }
 
-      const payload = {
-        id: user.id,
-        name: profile?.name || "",
-        academic_year: profile?.academic_year || null,
-        primary_major: profile?.primary_major || null,
-        second_major: profile?.second_major || null,
-        minor: profile?.minor || null,
-        concentration: profile?.concentration || null,
-        courses_taken: updated,
-        updated_at: new Date().toISOString(),
-      };
+        savedCoursesRef.current = snapshot;
+      }
 
-      const { error } = await supabase.from("profiles").upsert(payload);
-
-      if (error) {
-        console.error(error);
-        return;
+      if (arraysEqual(savedCoursesRef.current, desiredCoursesRef.current)) {
+        dirtyRef.current = false;
       }
 
       await refreshProfile();
     } catch (err) {
       console.error(err);
+      desiredCoursesRef.current = savedCoursesRef.current;
+      setLocalTakenCourses(savedCoursesRef.current);
+      dirtyRef.current = false;
     } finally {
-      setUpdating("");
+      saveInFlightRef.current = false;
+      setSaving(false);
+      setQueuedLabels(new Set());
+
+      // if user clicked again while finishing cleanup, run one more flush
+      if (!arraysEqual(savedCoursesRef.current, desiredCoursesRef.current)) {
+        flushCourseUpdates();
+      }
     }
   }
+
+  function toggleTaken(courseLabel, isTaken) {
+    if (!session?.user) return;
+
+    setLocalTakenCourses((prev) => {
+      const updated = isTaken
+        ? prev.filter((c) => c !== courseLabel)
+        : [...new Set([...prev, courseLabel])];
+
+      desiredCoursesRef.current = updated;
+      dirtyRef.current = true;
+
+      return updated;
+    });
+
+    setQueuedLabels((prev) => {
+      const next = new Set(prev);
+      next.add(courseLabel);
+      return next;
+    });
+
+    flushCourseUpdates();
+  }
+
+  const takenCourses = localTakenCourses;
 
   return (
     <div className="app">
@@ -146,6 +218,7 @@ export default function CourseDirectory({
           <span className="results-count">
             {results.length} {results.length === 1 ? "course" : "courses"} found
           </span>
+          {saving && <span className="status-hint">Saving changes...</span>}
         </div>
 
         <div className="table-card">
@@ -167,7 +240,7 @@ export default function CourseDirectory({
                 {results.map((c) => {
                   const label = buildCourseLabel(c);
                   const isTaken = takenCourses.includes(label);
-                  const isLoading = updating === label;
+                  const isLoading = queuedLabels.has(label);
 
                   return (
                     <tr key={c.crn}>
@@ -199,7 +272,6 @@ export default function CourseDirectory({
                                 : "taken-button"
                             }
                             onClick={() => toggleTaken(label, isTaken)}
-                            disabled={isLoading}
                           >
                             {isLoading
                               ? "Saving..."

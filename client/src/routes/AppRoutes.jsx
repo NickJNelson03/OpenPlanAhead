@@ -67,7 +67,12 @@ export default function AppRoutes({
         path="/profile"
         element={
           session ? (
-            <EditProfile />
+            <EditProfile
+              session={session}
+              profile={profile}
+              handleLogout={handleLogout}
+              refreshProfile={refreshProfile}
+            />
           ) : (
             <Navigate to="/login" replace />
           )
