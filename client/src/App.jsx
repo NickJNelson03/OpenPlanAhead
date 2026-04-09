@@ -67,7 +67,8 @@ export default function App() {
           second_major,
           minor,
           concentration,
-          courses_taken
+          courses_taken,
+          role
         `)
         .eq("id", userId)
         .maybeSingle();

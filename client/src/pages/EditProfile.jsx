@@ -80,7 +80,8 @@ export default function EditProfile({
             second_major,
             minor,
             concentration,
-            courses_taken
+            courses_taken,
+            role
           `)
           .eq("id", currentUser.id)
           .maybeSingle();
@@ -254,6 +255,7 @@ export default function EditProfile({
         minor: minor || null,
         concentration: concentration || null,
         courses_taken: coursesTaken,
+        role: profile?.role || "student",
         updated_at: new Date().toISOString(),
       };
 

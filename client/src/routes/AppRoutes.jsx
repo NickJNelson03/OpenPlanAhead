@@ -8,6 +8,10 @@ import Signup from "../pages/Signup";
 import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 import EditProfile from "../pages/EditProfile";
+import CreateCourse from "../pages/CreateCourse";
+import ManageUsers from "../pages/ManageUsers";
+import ViewCourses from "../pages/ViewCourses";
+import PublishedCourses from "../pages/PublishedCourses";
 
 export default function AppRoutes({
   session,
@@ -15,6 +19,9 @@ export default function AppRoutes({
   profile,
   refreshProfile,
 }) {
+  const isCreator = profile?.role === "creator" || profile?.role === "root";
+  const isRoot = profile?.role === "root";
+
   return (
     <Routes>
       <Route
@@ -49,6 +56,36 @@ export default function AppRoutes({
       />
 
       <Route
+        path="/published-courses"
+        element={
+          session ? (
+            <PublishedCourses
+              session={session}
+              profile={profile}
+              handleLogout={handleLogout}
+            />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+
+      <Route
+        path="/view-courses"
+        element={
+          session && isCreator ? (
+            <ViewCourses
+              session={session}
+              profile={profile}
+              handleLogout={handleLogout}
+            />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
+
+      <Route
         path="/my-courses"
         element={
           session ? (
@@ -75,6 +112,36 @@ export default function AppRoutes({
             />
           ) : (
             <Navigate to="/login" replace />
+          )
+        }
+      />
+
+      <Route
+        path="/create-course"
+        element={
+          session && isCreator ? (
+            <CreateCourse
+              session={session}
+              profile={profile}
+              handleLogout={handleLogout}
+            />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
+
+      <Route
+        path="/manage-users"
+        element={
+          session && isRoot ? (
+            <ManageUsers
+              session={session}
+              profile={profile}
+              handleLogout={handleLogout}
+            />
+          ) : (
+            <Navigate to="/" replace />
           )
         }
       />

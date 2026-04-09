@@ -8,6 +8,9 @@ export default function AppNavbar({ session, profile, handleLogout }) {
     return location.pathname === path ? "nav-link nav-link-active" : "nav-link";
   }
 
+  const isCreator = profile?.role === "creator" || profile?.role === "root";
+  const isRoot = profile?.role === "root";
+
   return (
     <div className="app-navbar">
       <div className="app-navbar-left">
@@ -23,12 +26,35 @@ export default function AppNavbar({ session, profile, handleLogout }) {
             <Link to="/courses" className={navClass("/courses")}>
               Search Courses
             </Link>
+            <Link
+              to="/published-courses"
+              className={navClass("/published-courses")}
+            >
+              Published Courses
+            </Link>
             <Link to="/my-courses" className={navClass("/my-courses")}>
               My Courses
             </Link>
             <Link to="/profile" className={navClass("/profile")}>
               Profile
             </Link>
+
+            {isCreator && (
+              <>
+                <Link to="/view-courses" className={navClass("/view-courses")}>
+                  View Courses
+                </Link>
+                <Link to="/create-course" className={navClass("/create-course")}>
+                  Create Courses
+                </Link>
+              </>
+            )}
+
+            {isRoot && (
+              <Link to="/manage-users" className={navClass("/manage-users")}>
+                Manage Users
+              </Link>
+            )}
           </div>
         )}
       </div>
@@ -38,6 +64,7 @@ export default function AppNavbar({ session, profile, handleLogout }) {
           <>
             <span className="navbar-user">
               {profile?.name ? `Hello, ${profile.name}` : session.user.email}
+              {profile?.role ? ` (${profile.role})` : ""}
             </span>
             <button className="navbar-logout" onClick={handleLogout}>
               Log Out
