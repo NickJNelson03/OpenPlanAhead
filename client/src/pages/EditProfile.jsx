@@ -2,11 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import AppNavbar from "../components/AppNavbar";
-import {
-  MAJOR_OPTIONS,
-  MINOR_OPTIONS,
-  CONCENTRATION_OPTIONS,
-} from "../data/programOptions";
 
 const YEAR_OPTIONS = [
   "First Year",
@@ -19,6 +14,10 @@ const YEAR_OPTIONS = [
 function buildCourseLabel(course) {
   const number = String(course.course_number || "").replace(/\.00$/, "");
   return `${course.subject} ${number} - ${course.title}`;
+}
+
+function sortNames(list) {
+  return [...list].sort((a, b) => a.localeCompare(b));
 }
 
 export default function EditProfile({
@@ -43,6 +42,10 @@ export default function EditProfile({
   const [allCourses, setAllCourses] = useState([]);
   const [coursesLoaded, setCoursesLoaded] = useState(false);
   const [coursesLoading, setCoursesLoading] = useState(false);
+
+  const [majorOptions, setMajorOptions] = useState([]);
+  const [minorOptions, setMinorOptions] = useState([]);
+  const [concentrationOptions, setConcentrationOptions] = useState([]);
 
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
@@ -112,6 +115,48 @@ export default function EditProfile({
   }, [navigate]);
 
   useEffect(() => {
+    async function loadPrograms() {
+      const { data, error } = await supabase
+        .from("programs")
+        .select("name, types")
+        .order("name", { ascending: true });
+
+      if (error) {
+        console.error("Failed to load programs:", error);
+        return;
+      }
+
+      const programs = data || [];
+
+      setMajorOptions(
+        sortNames(
+          programs
+            .filter((program) => program.types?.includes("major"))
+            .map((program) => program.name)
+        )
+      );
+
+      setMinorOptions(
+        sortNames(
+          programs
+            .filter((program) => program.types?.includes("minor"))
+            .map((program) => program.name)
+        )
+      );
+
+      setConcentrationOptions(
+        sortNames(
+          programs
+            .filter((program) => program.types?.includes("concentration"))
+            .map((program) => program.name)
+        )
+      );
+    }
+
+    loadPrograms();
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
 
     async function loadCoursesIfNeeded() {
@@ -119,9 +164,20 @@ export default function EditProfile({
 
       try {
         setCoursesLoading(true);
-        const module = await import("../data/courses.json");
+
+        const { data, error } = await supabase
+          .from("course_offerings")
+          .select("*")
+          .order("subject", { ascending: true })
+          .order("course_number", { ascending: true });
+
+        if (error) {
+          console.error("Failed to load course data:", error);
+          return;
+        }
+
         if (!isMounted) return;
-        setAllCourses(module.default || []);
+        setAllCourses(data || []);
         setCoursesLoaded(true);
       } catch (err) {
         console.error("Failed to load course data:", err);
@@ -310,7 +366,7 @@ export default function EditProfile({
                 required
               >
                 <option value="">Select your primary major</option>
-                {MAJOR_OPTIONS.map((option) => (
+                {majorOptions.map((option) => (
                   <option key={option} value={option}>
                     {option}
                   </option>
@@ -327,7 +383,7 @@ export default function EditProfile({
                 onChange={(e) => setSecondMajor(e.target.value)}
               >
                 <option value="">None</option>
-                {MAJOR_OPTIONS.map((option) => (
+                {majorOptions.map((option) => (
                   <option key={option} value={option}>
                     {option}
                   </option>
@@ -344,7 +400,7 @@ export default function EditProfile({
                 onChange={(e) => setMinor(e.target.value)}
               >
                 <option value="">None</option>
-                {MINOR_OPTIONS.map((option) => (
+                {minorOptions.map((option) => (
                   <option key={option} value={option}>
                     {option}
                   </option>
@@ -361,7 +417,7 @@ export default function EditProfile({
                 onChange={(e) => setConcentration(e.target.value)}
               >
                 <option value="">None</option>
-                {CONCENTRATION_OPTIONS.map((option) => (
+                {concentrationOptions.map((option) => (
                   <option key={option} value={option}>
                     {option}
                   </option>

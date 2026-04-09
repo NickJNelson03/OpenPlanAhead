@@ -1,10 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import AppNavbar from "../components/AppNavbar";
-import courses from "../data/courses.json";
 import "../App.css";
-
-const SUBJECTS = ["All", ...Array.from(new Set(courses.map((c) => c.subject))).sort()];
 
 function formatTime(t) {
   if (!t) return "";
@@ -41,25 +38,47 @@ export default function CourseDirectory({
   const [query, setQuery] = useState("");
   const [subject, setSubject] = useState("All");
 
-  const [localTakenCourses, setLocalTakenCourses] = useState(profile?.courses_taken || []);
+  const [courses, setCourses] = useState([]);
+  const [coursesLoading, setCoursesLoading] = useState(true);
+
+  const [localTakenCourses, setLocalTakenCourses] = useState(
+    profile?.courses_taken || []
+  );
   const [saving, setSaving] = useState(false);
   const [queuedLabels, setQueuedLabels] = useState(new Set());
 
-  // latest desired state
   const desiredCoursesRef = useRef(profile?.courses_taken || []);
-  // last state successfully saved
   const savedCoursesRef = useRef(profile?.courses_taken || []);
-  // avoid overlapping saves
   const saveInFlightRef = useRef(false);
-  // prevent profile refresh from overwriting local unsaved changes
   const dirtyRef = useRef(false);
-  // skip auto-save on first mount/sync
   const initializedRef = useRef(false);
+
+  useEffect(() => {
+    async function loadCourses() {
+      setCoursesLoading(true);
+
+      const { data, error } = await supabase
+        .from("course_offerings")
+        .select("*")
+        .order("subject", { ascending: true })
+        .order("course_number", { ascending: true });
+
+      if (error) {
+        console.error("Failed to load course offerings:", error);
+        setCourses([]);
+      } else {
+        setCourses(data || []);
+      }
+
+      setCoursesLoading(false);
+    }
+
+    loadCourses();
+  }, []);
 
   useEffect(() => {
     const incoming = profile?.courses_taken || [];
 
-    // only sync from parent profile if we don't currently have unsaved local changes
     if (!dirtyRef.current) {
       setLocalTakenCourses(incoming);
       desiredCoursesRef.current = incoming;
@@ -68,6 +87,10 @@ export default function CourseDirectory({
 
     initializedRef.current = true;
   }, [profile?.courses_taken]);
+
+  const SUBJECTS = useMemo(() => {
+    return ["All", ...Array.from(new Set(courses.map((c) => c.subject))).sort()];
+  }, [courses]);
 
   const results = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -86,7 +109,7 @@ export default function CourseDirectory({
         `${c.subject} ${c.course_number}`.toLowerCase().includes(q)
       );
     });
-  }, [query, subject]);
+  }, [query, subject, courses]);
 
   async function flushCourseUpdates() {
     if (!session?.user) return;
@@ -115,7 +138,6 @@ export default function CourseDirectory({
 
         if (error) {
           console.error(error);
-          // revert UI to last confirmed saved state
           desiredCoursesRef.current = savedCoursesRef.current;
           setLocalTakenCourses(savedCoursesRef.current);
           dirtyRef.current = false;
@@ -140,7 +162,6 @@ export default function CourseDirectory({
       setSaving(false);
       setQueuedLabels(new Set());
 
-      // if user clicked again while finishing cleanup, run one more flush
       if (!arraysEqual(savedCoursesRef.current, desiredCoursesRef.current)) {
         flushCourseUpdates();
       }
@@ -171,6 +192,19 @@ export default function CourseDirectory({
   }
 
   const takenCourses = localTakenCourses;
+
+  if (coursesLoading) {
+    return (
+      <div className="app">
+        <AppNavbar
+          session={session}
+          profile={profile}
+          handleLogout={handleLogout}
+        />
+        <div className="main-content">Loading courses...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
@@ -248,7 +282,7 @@ export default function CourseDirectory({
                         <span className={badgeClass(c.subject)}>
                           {c.subject}
                         </span>{" "}
-                        {c.course_number.replace(/\.00$/, "")}
+                        {String(c.course_number || "").replace(/\.00$/, "")}
                       </td>
 
                       <td>{c.title}</td>
