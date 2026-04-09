@@ -10,7 +10,7 @@ import ResetPassword from "../pages/ResetPassword";
 import EditProfile from "../pages/EditProfile";
 import CreateCourse from "../pages/CreateCourse";
 import ManageUsers from "../pages/ManageUsers";
-import ViewCourses from "../pages/ViewCourses";
+import ManageCourses from "../pages/ManageCourses";
 import PublishedCourses from "../pages/PublishedCourses";
 
 export default function AppRoutes({
@@ -40,7 +40,7 @@ export default function AppRoutes({
       />
 
       <Route
-        path="/courses"
+        path="/course-offerings"
         element={
           session ? (
             <CourseDirectory
@@ -71,10 +71,10 @@ export default function AppRoutes({
       />
 
       <Route
-        path="/view-courses"
+        path="/manage-courses"
         element={
           session && isCreator ? (
-            <ViewCourses
+            <ManageCourses
               session={session}
               profile={profile}
               handleLogout={handleLogout}

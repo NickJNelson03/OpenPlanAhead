@@ -38,8 +38,12 @@ export default function CourseDirectory({
   const [query, setQuery] = useState("");
   const [subject, setSubject] = useState("All");
 
+  const [allTerms, setAllTerms] = useState([]);
+  const [selectedTerm, setSelectedTerm] = useState("");
+  const [termsLoading, setTermsLoading] = useState(true);
+
   const [courses, setCourses] = useState([]);
-  const [coursesLoading, setCoursesLoading] = useState(true);
+  const [coursesLoading, setCoursesLoading] = useState(false);
 
   const [localTakenCourses, setLocalTakenCourses] = useState(
     profile?.courses_taken || []
@@ -54,12 +58,43 @@ export default function CourseDirectory({
   const initializedRef = useRef(false);
 
   useEffect(() => {
-    async function loadCourses() {
+    async function loadTerms() {
+      setTermsLoading(true);
+
+      const { data, error } = await supabase
+        .from("course_offerings")
+        .select("term")
+        .order("term", { ascending: true });
+
+      if (error) {
+        console.error("Failed to load terms:", error);
+        setAllTerms([]);
+      } else {
+        const uniqueTerms = Array.from(
+          new Set((data || []).map((row) => row.term).filter(Boolean))
+        );
+        setAllTerms(uniqueTerms);
+      }
+
+      setTermsLoading(false);
+    }
+
+    loadTerms();
+  }, []);
+
+  useEffect(() => {
+    async function loadCoursesForTerm() {
+      if (!selectedTerm) {
+        setCourses([]);
+        return;
+      }
+
       setCoursesLoading(true);
 
       const { data, error } = await supabase
         .from("course_offerings")
         .select("*")
+        .eq("term", selectedTerm)
         .order("subject", { ascending: true })
         .order("course_number", { ascending: true });
 
@@ -73,8 +108,8 @@ export default function CourseDirectory({
       setCoursesLoading(false);
     }
 
-    loadCourses();
-  }, []);
+    loadCoursesForTerm();
+  }, [selectedTerm]);
 
   useEffect(() => {
     const incoming = profile?.courses_taken || [];
@@ -104,8 +139,8 @@ export default function CourseDirectory({
       return (
         c.title.toLowerCase().includes(q) ||
         c.subject.toLowerCase().includes(q) ||
-        c.course_number.toLowerCase().includes(q) ||
-        c.instructor.toLowerCase().includes(q) ||
+        String(c.course_number || "").toLowerCase().includes(q) ||
+        (c.instructor || "").toLowerCase().includes(q) ||
         `${c.subject} ${c.course_number}`.toLowerCase().includes(q)
       );
     });
@@ -131,6 +166,7 @@ export default function CourseDirectory({
           minor: profile?.minor || null,
           concentration: profile?.concentration || null,
           courses_taken: snapshot,
+          role: profile?.role || "student",
           updated_at: new Date().toISOString(),
         };
 
@@ -193,6 +229,77 @@ export default function CourseDirectory({
 
   const takenCourses = localTakenCourses;
 
+  if (termsLoading) {
+    return (
+      <div className="app">
+        <AppNavbar
+          session={session}
+          profile={profile}
+          handleLogout={handleLogout}
+        />
+        <div className="main-content">Loading semesters...</div>
+      </div>
+    );
+  }
+
+  if (!selectedTerm) {
+    return (
+      <div className="app">
+        <AppNavbar
+          session={session}
+          profile={profile}
+          handleLogout={handleLogout}
+        />
+
+        <div className="create-course-page">
+          <div className="create-course-shell">
+            <div className="create-course-hero">
+              <div className="auth-brand-badge">OpenPlanAhead</div>
+              <h1>Choose a Semester</h1>
+              <p>
+                Select the semester you want to browse before viewing course
+                offerings.
+              </p>
+
+              <div className="create-course-hero-pills">
+                <span className="create-course-pill">Course Offerings</span>
+                <span className="create-course-pill">Semester Search</span>
+              </div>
+            </div>
+
+            <div className="create-course-card">
+              <div className="create-course-section">
+                <div className="create-course-section-header">
+                  <h2>Available Semesters</h2>
+                  <p>Choose one to continue.</p>
+                </div>
+
+                <div className="restriction-chip-group">
+                  {allTerms.map((term) => (
+                    <button
+                      key={term}
+                      type="button"
+                      className="restriction-chip"
+                      onClick={() => setSelectedTerm(term)}
+                    >
+                      {term}
+                    </button>
+                  ))}
+                </div>
+
+                {allTerms.length === 0 && (
+                  <div className="empty-state">
+                    No course offering semesters found.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (coursesLoading) {
     return (
       <div className="app">
@@ -201,7 +308,7 @@ export default function CourseDirectory({
           profile={profile}
           handleLogout={handleLogout}
         />
-        <div className="main-content">Loading courses...</div>
+        <div className="main-content">Loading course offerings...</div>
       </div>
     );
   }
@@ -215,10 +322,8 @@ export default function CourseDirectory({
       />
 
       <header className="header">
-        <h1>Search Courses</h1>
-        <p className="subtitle">
-          Kenyon College &middot; Fall 2026 Course Directory
-        </p>
+        <h1>Course Offerings</h1>
+        <p className="subtitle">Browsing offerings for {selectedTerm}</p>
 
         <div className="search-bar">
           <div className="search-bar-inner">
@@ -252,7 +357,21 @@ export default function CourseDirectory({
           <span className="results-count">
             {results.length} {results.length === 1 ? "course" : "courses"} found
           </span>
-          {saving && <span className="status-hint">Saving changes...</span>}
+
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            {saving && <span className="status-hint">Saving changes...</span>}
+            <button
+              type="button"
+              className="create-course-secondary"
+              onClick={() => {
+                setSelectedTerm("");
+                setQuery("");
+                setSubject("All");
+              }}
+            >
+              Change Semester
+            </button>
+          </div>
         </div>
 
         <div className="table-card">
@@ -277,7 +396,7 @@ export default function CourseDirectory({
                   const isLoading = queuedLabels.has(label);
 
                   return (
-                    <tr key={c.crn}>
+                    <tr key={`${c.term}-${c.crn}`}>
                       <td>
                         <span className={badgeClass(c.subject)}>
                           {c.subject}
@@ -286,7 +405,7 @@ export default function CourseDirectory({
                       </td>
 
                       <td>{c.title}</td>
-                      <td>{c.instructor}</td>
+                      <td>{c.instructor || "—"}</td>
                       <td>{c.days || "—"}</td>
 
                       <td>
@@ -295,7 +414,7 @@ export default function CourseDirectory({
                           : "—"}
                       </td>
 
-                      <td>{c.credits}</td>
+                      <td>{c.credits || "—"}</td>
 
                       <td>
                         {session ? (
@@ -325,7 +444,7 @@ export default function CourseDirectory({
 
             {results.length === 0 && (
               <div className="empty-state">
-                No courses match your search.
+                No courses match your search for {selectedTerm}.
               </div>
             )}
           </div>

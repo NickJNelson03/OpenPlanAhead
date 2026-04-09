@@ -233,7 +233,7 @@ export default function CreateCourse({ session, profile, handleLogout }) {
               </div>
 
               <div className="auth-field">
-                <label>Restrictions</label>
+                <label>Restrictions(This course will not open to the classes that you select)</label>
                 <div className="restriction-chip-group">
                   {CLASS_RESTRICTION_OPTIONS.map((option) => {
                     const active = restrictions.includes(option);

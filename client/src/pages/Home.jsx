@@ -20,7 +20,7 @@ export default function Home({ session, profile, handleLogout }) {
           </p>
 
           <div className="home-hero-actions">
-            <Link to="/courses" className="dashboard-link-button">
+            <Link to="/published-courses" className="dashboard-link-button">
               Search Courses
             </Link>
             <Link to="/my-courses" className="dashboard-link-button">

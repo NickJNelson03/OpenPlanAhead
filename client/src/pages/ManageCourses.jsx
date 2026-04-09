@@ -5,7 +5,7 @@ import "../App.css";
 
 const SEMESTER_OPTIONS = ["Fall", "Spring"];
 
-export default function ViewCourses({ session, profile, handleLogout }) {
+export default function ManageCourses({ session, profile, handleLogout }) {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -393,8 +393,8 @@ export default function ViewCourses({ session, profile, handleLogout }) {
       />
 
       <header className="header">
-        <h1>View Courses</h1>
-        <p className="subtitle">Search the master course catalog</p>
+        <h1>Manage Courses</h1>
+        <p className="subtitle">Search and manage the master course catalog</p>
 
         <div className="search-bar">
           <div className="search-bar-inner">
