@@ -102,9 +102,26 @@ export default function Home({ session, profile, handleLogout }) {
             <h2 className="text-2xl font-bold mb-6">Next Steps</h2>
 
             <div className="space-y-4">
-              <Step title="Complete profile" subtitle="Add your advisor" />
-              <Step title="Search classes" subtitle="Find Spring electives" />
-              <Step title="Check prerequisites" subtitle="Verify requirements" />
+              <Step
+                title="Complete profile"
+                subtitle="Add your advisor"
+                icon="person_add"
+                to="/profile"
+              />
+
+              <Step
+                title="Search classes"
+                subtitle="Find Spring electives"
+                icon="search"
+                to="/published-courses"
+              />
+
+              <Step
+                title="Check prerequisites"
+                subtitle="Verify requirements"
+                icon="fact_check"
+                to="/degree-audit"
+              />
             </div>
           </div>
 
@@ -113,10 +130,10 @@ export default function Home({ session, profile, handleLogout }) {
             <h2 className="text-2xl font-bold mb-6">Quick Insights</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Insight text="You've completed 2 math courses this semester." />
-              <Insight text="You still need to plan next year." />
-              <Insight text="Your GPA trend is rising." />
-              <Insight text="Saved 4 internships." />
+              <Insight icon="calculate" text="You've completed 2 math courses this semester." />
+              <Insight icon="pending_actions" text="You still need to plan next year." />
+              <Insight icon="trending_up" text="Your GPA trend is rising." />
+              <Insight icon="bookmark" text="Saved 4 internships." />
             </div>
           </div>
         </div>
@@ -136,19 +153,41 @@ function Snapshot({ label, value }) {
   );
 }
 
-function Step({ title, subtitle }) {
+function Step({ title, subtitle, icon, to }) {
   return (
-    <div className="p-4 rounded-md bg-gray-100">
-      <p className="font-semibold">{title}</p>
-      <p className="text-xs text-gray-500">{subtitle}</p>
-    </div>
+    <Link
+      to={to}
+      className="flex items-center gap-4 p-4 rounded-md bg-gray-100 hover:bg-gray-200 transition"
+    >
+      {/* LEFT ICON */}
+      <span className="material-symbols-outlined text-indigo-600">
+        {icon}
+      </span>
+
+      {/* TEXT */}
+      <div className="flex-1">
+        <p className="font-semibold">{title}</p>
+        <p className="text-xs text-gray-500">{subtitle}</p>
+      </div>
+
+      {/* RIGHT ARROW */}
+      <span className="material-symbols-outlined text-gray-400">
+        chevron_right
+      </span>
+    </Link>
   );
 }
 
-function Insight({ text }) {
+function Insight({ text, icon }) {
   return (
-    <div className="p-4 rounded-md bg-gray-100">
-      <p>{text}</p>
+    <div className="p-6 rounded-lg bg-gray-100 space-y-3">
+      <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+        <span className="material-symbols-outlined text-indigo-600">
+          {icon}
+        </span>
+      </div>
+
+      <p className="text-gray-600">{text}</p>
     </div>
   );
 }
