@@ -301,213 +301,195 @@ export default function EditProfile({
   }
 
   return (
-    <div className="app">
+    <div className="min-h-screen bg-[#f9f9fb] text-[#2d3338]">
       <AppNavbar
         session={session}
         profile={profile}
         handleLogout={handleLogout}
       />
 
-      <div className="auth-page">
-        <div className="auth-shell">
-          <div className="auth-brand">
-            <Link to="/" className="auth-back-link">
+      <main className="pt-28 pb-20 px-8 max-w-screen-2xl mx-auto grid grid-cols-1 md:grid-cols-[0.8fr_1.6fr] gap-0 items-stretch min-h-[calc(100vh-120px)]">
+
+        {/* TOP HEADER BLOCK */}
+        <section className="p-12 bg-gradient-to-br from-indigo-700 to-indigo-900 text-white shadow-2xl h-full flex flex-col justify-between space-y-6 relative overflow-hidden rounded-2xl border border-white/10 m-4 md:m-0">
+          <div className="mt-6">
+            <Link to="/" className="text-sm opacity-80 hover:opacity-100">
               ← Back to course directory
             </Link>
-            <div className="auth-brand-badge">OpenPlanAhead</div>
-            <h1>Edit your profile</h1>
-            <p>
-              Add your academic details so we can personalize your advising
-              experience.
+            <h1 className="text-4xl font-extrabold mt-8">Edit Profile</h1>
+            <p className="text-indigo-100 mt-4">
+              Update your academic details and personalize your experience.
             </p>
           </div>
 
-          <form className="auth-card" onSubmit={handleSubmit}>
-            <div className="auth-card-header">
-              <h2>Profile</h2>
-              <p>Update your academic information and courses already completed.</p>
+          <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+        </section>
+
+        {/* FORM CARD */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-10 lg:p-16 space-y-10 w-full h-full shadow-sm m-4 md:m-0">
+
+          <h2 className="text-2xl font-bold -mt-4">Profile Information</h2>
+
+          <form onSubmit={handleSubmit} className="space-y-10">
+
+            {/* NAME + YEAR */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 px-1 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  className="w-full px-6 py-4 rounded-full bg-gray-100 border border-gray-200 text-on-surface focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  placeholder="None"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 px-1 mb-1">Academic Year</label>
+                <select
+                  className="w-full px-6 py-4 rounded-full bg-gray-100 border border-gray-200 text-on-surface focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  value={academicYear}
+                  onChange={(e) => setAcademicYear(e.target.value)}
+                  required
+                >
+                  <option value="">Select your year</option>
+                  {YEAR_OPTIONS.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div className="auth-field">
-              <label htmlFor="profile-name">Name</label>
-              <input
-                id="profile-name"
-                type="text"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
+            {/* MAJORS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 px-1 mb-1">Primary Major</label>
+                <select
+                  className="w-full px-6 py-4 rounded-full bg-gray-100 border border-gray-200 text-on-surface focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  value={primaryMajor}
+                  onChange={(e) => setPrimaryMajor(e.target.value)}
+                  required
+                >
+                  <option value="">Select</option>
+                  {majorOptions.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 px-1 mb-1">Second Major</label>
+                <select
+                  className="w-full px-6 py-4 rounded-full bg-gray-100 border border-gray-200 text-on-surface focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  value={secondMajor}
+                  onChange={(e) => setSecondMajor(e.target.value)}
+                >
+                  <option value="">None</option>
+                  {majorOptions.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div className="auth-field">
-              <label htmlFor="profile-year">Academic Year</label>
-              <select
-                id="profile-year"
-                className="auth-select"
-                value={academicYear}
-                onChange={(e) => setAcademicYear(e.target.value)}
-                required
-              >
-                <option value="">Select your year</option>
-                {YEAR_OPTIONS.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
+            {/* MINOR + CONCENTRATION */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 px-1 mb-1">Minor</label>
+                <select
+                  className="w-full px-6 py-4 rounded-full bg-gray-100 border border-gray-200 text-on-surface focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  value={minor}
+                  onChange={(e) => setMinor(e.target.value)}
+                >
+                  <option value="">None</option>
+                  {minorOptions.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 px-1 mb-1">Concentration</label>
+                <select
+                  className="w-full px-6 py-4 rounded-full bg-gray-100 border border-gray-200 text-on-surface focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  value={concentration}
+                  onChange={(e) => setConcentration(e.target.value)}
+                >
+                  <option value="">None</option>
+                  {concentrationOptions.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div className="auth-field">
-              <label htmlFor="profile-primary-major">Primary Major</label>
-              <select
-                id="profile-primary-major"
-                className="auth-select"
-                value={primaryMajor}
-                onChange={(e) => setPrimaryMajor(e.target.value)}
-                required
-              >
-                <option value="">Select your primary major</option>
-                {majorOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* COURSES */}
+            <div className="space-y-3">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 px-1 mb-1">Courses Taken</label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                <input
+                  type="text"
+                  placeholder="None"
+                  className="w-full pl-12 pr-6 py-4 rounded-full bg-gray-100 border border-gray-200 text-on-surface focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  value={courseQuery}
+                  onChange={(e) => setCourseQuery(e.target.value)}
+                />
+              </div>
 
-            <div className="auth-field">
-              <label htmlFor="profile-second-major">Second Major</label>
-              <select
-                id="profile-second-major"
-                className="auth-select"
-                value={secondMajor}
-                onChange={(e) => setSecondMajor(e.target.value)}
-              >
-                <option value="">None</option>
-                {majorOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="auth-field">
-              <label htmlFor="profile-minor">Minor</label>
-              <select
-                id="profile-minor"
-                className="auth-select"
-                value={minor}
-                onChange={(e) => setMinor(e.target.value)}
-              >
-                <option value="">None</option>
-                {minorOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="auth-field">
-              <label htmlFor="profile-concentration">Concentration</label>
-              <select
-                id="profile-concentration"
-                className="auth-select"
-                value={concentration}
-                onChange={(e) => setConcentration(e.target.value)}
-              >
-                <option value="">None</option>
-                {concentrationOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="auth-field">
-              <label htmlFor="profile-courses-search">Courses Taken</label>
-              <input
-                id="profile-courses-search"
-                type="text"
-                placeholder="Search courses like MATH 111 or Calculus"
-                value={courseQuery}
-                onChange={(e) => setCourseQuery(e.target.value)}
-              />
-
-              {courseQuery.trim() && coursesLoading && (
-                <div className="course-search-empty">Loading courses...</div>
-              )}
-
-              {courseQuery.trim() && !coursesLoading && filteredCourses.length > 0 && (
-                <div className="course-search-results">
+              {courseQuery && filteredCourses.length > 0 && (
+                <div className="border border-gray-200 rounded-xl mt-4 max-h-40 overflow-y-auto bg-white">
                   {filteredCourses.map((course) => {
                     const label = buildCourseLabel(course);
                     return (
-                      <button
+                      <div
                         key={course.crn}
-                        type="button"
-                        className="course-search-result"
+                        className="p-2 hover:bg-gray-100 cursor-pointer"
                         onClick={() => addCourse(course)}
                       >
                         {label}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
               )}
 
-              {courseQuery.trim() &&
-                !coursesLoading &&
-                coursesLoaded &&
-                filteredCourses.length === 0 && (
-                  <div className="course-search-empty">No matching courses found.</div>
-                )}
-
-              <div className="selected-courses">
-                {coursesTaken.length === 0 ? (
-                  <p className="selected-courses-empty">No courses selected yet.</p>
-                ) : (
-                  coursesTaken.map((course) => (
-                    <div key={course} className="course-chip">
-                      <span>{course}</span>
-                      <button
-                        type="button"
-                        className="course-chip-remove"
-                        onClick={() => removeCourse(course)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))
-                )}
+              <div className="flex flex-wrap gap-2 mt-3">
+                {coursesTaken.map((course) => (
+                  <div
+                    key={course}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md"
+                  >
+                    {course}
+                    <button onClick={() => removeCourse(course)}>×</button>
+                  </div>
+                ))}
               </div>
             </div>
 
+            {/* MESSAGE */}
             {message && (
-              <div
-                className={
-                  messageType === "error"
-                    ? "auth-message auth-message-error"
-                    : "auth-message auth-message-success"
-                }
-              >
+              <div className={`p-3 rounded ${
+                messageType === "error" ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"
+              }`}>
                 {message}
               </div>
             )}
 
-            <button type="submit" className="auth-submit" disabled={saving}>
+            {/* SUBMIT */}
+            <button
+              type="submit"
+              className="px-10 py-4 bg-indigo-600 text-white rounded-full font-bold shadow-lg hover:bg-indigo-700 transition-all active:scale-95"
+              disabled={saving}
+            >
               {saving ? "Saving..." : "Save Profile"}
             </button>
 
-            <p className="auth-switch">
-              <Link to="/">Back to home</Link>
-            </p>
           </form>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
