@@ -308,7 +308,7 @@ export default function EditProfile({
         handleLogout={handleLogout}
       />
 
-      <main className="pt-28 pb-20 px-8 max-w-screen-2xl mx-auto grid grid-cols-1 md:grid-cols-[0.8fr_1.6fr] gap-0 items-stretch min-h-[calc(100vh-120px)]">
+      <main className="pt-16 pb-20 px-8 max-w-screen-2xl mx-auto grid grid-cols-1 md:grid-cols-[0.8fr_1.6fr] gap-0 items-stretch min-h-[calc(100vh-120px)]">
 
         {/* TOP HEADER BLOCK */}
         <section className="p-12 bg-gradient-to-br from-indigo-700 to-indigo-900 text-white shadow-2xl h-full flex flex-col justify-between space-y-6 relative overflow-hidden rounded-2xl border border-white/10 m-4 md:m-0">

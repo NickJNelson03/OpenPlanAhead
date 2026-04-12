@@ -13,7 +13,7 @@ export default function Home({ session, profile, handleLogout }) {
         handleLogout={handleLogout}
       />
 
-      <main className="pt-24 pb-20 px-8 max-w-screen-2xl mx-auto space-y-12">
+      <main className="pt-16 pb-20 px-8 max-w-screen-2xl mx-auto space-y-12">
 
         {/* HERO */}
         <section className="relative overflow-hidden rounded-lg p-12 bg-gradient-to-br from-indigo-700 to-indigo-900 shadow-2xl">
